@@ -1,3 +1,5 @@
+import React from 'react';
+
 function ControlPanel({ url, setUrl, flags, toggleFlag, isDownloading, onDownload, onCleanup }) {
   const flagsConfig = [
     {

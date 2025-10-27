@@ -80,15 +80,16 @@ async function simulateDownload(url, targetDir, options, logCallback) {
   
   // Create a sample file to demonstrate functionality
   const indexPath = path.join(targetDir, 'index.html');
+  const escapedUrl = escapeHtml(url);
   await fs.writeFile(indexPath, `<!DOCTYPE html>
 <html>
 <head>
-  <title>Downloaded from ${url}</title>
+  <title>Downloaded from ${escapedUrl}</title>
 </head>
 <body>
   <h1>Site downloaded successfully</h1>
-  <p>URL: ${url}</p>
-  <p>Options: ${JSON.stringify(options)}</p>
+  <p>URL: ${escapedUrl}</p>
+  <p>Options: ${escapeHtml(JSON.stringify(options))}</p>
 </body>
 </html>`);
 
@@ -100,16 +101,21 @@ async function simulateDownload(url, targetDir, options, logCallback) {
  */
 async function createZip(sourceDir, outputPath, logCallback) {
   try {
-    // Using native zip command (cross-platform alternative would be archiver npm package)
+    // Using native zip command with proper escaping
     const isWindows = process.platform === 'win32';
+    
+    // Escape paths to prevent command injection
+    const escapedSourceDir = sourceDir.replace(/"/g, '\\"');
+    const escapedOutputPath = outputPath.replace(/"/g, '\\"');
+    
     let command;
 
     if (isWindows) {
       // PowerShell compress for Windows
-      command = `powershell Compress-Archive -Path "${sourceDir}\\*" -DestinationPath "${outputPath}"`;
+      command = `powershell Compress-Archive -Path "${escapedSourceDir}\\*" -DestinationPath "${escapedOutputPath}"`;
     } else {
       // Unix zip command
-      command = `cd "${sourceDir}" && zip -r "${outputPath}" .`;
+      command = `cd "${escapedSourceDir}" && zip -r "${escapedOutputPath}" .`;
     }
 
     await execAsync(command);
@@ -142,6 +148,20 @@ function sanitizeFilename(url) {
     .replace(/[^a-z0-9]/gi, '-')
     .toLowerCase()
     .substring(0, 50);
+}
+
+/**
+ * Escape HTML to prevent XSS
+ */
+function escapeHtml(text) {
+  const map = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;'
+  };
+  return text.replace(/[&<>"']/g, (m) => map[m]);
 }
 
 module.exports = {

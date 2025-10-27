@@ -1,3 +1,5 @@
+import React from 'react';
+
 function LogViewer({ logs, onClear, isDarkMode }) {
   const getLogIcon = (type) => {
     switch (type) {
