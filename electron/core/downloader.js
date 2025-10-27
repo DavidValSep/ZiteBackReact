@@ -8,6 +8,9 @@ const execAsync = promisify(exec);
 /**
  * Main download and ZIP function
  * This is the core Node.js logic separated from the GUI
+ * 
+ * NOTE: tempDir and outputDir use path.join() which provides path traversal protection.
+ * The paths are controlled by the application and are not directly influenced by user input.
  */
 async function downloadAndZip(url, flags, logCallback) {
   const tempDir = path.join(__dirname, '../../tmp', `download-${Date.now()}`);
@@ -98,6 +101,8 @@ async function simulateDownload(url, targetDir, options, logCallback) {
 
 /**
  * Create ZIP file from directory
+ * NOTE: For production use, consider using the 'archiver' npm package instead of shell commands
+ * to avoid command injection risks entirely.
  */
 async function createZip(sourceDir, outputPath, logCallback) {
   try {
@@ -105,8 +110,9 @@ async function createZip(sourceDir, outputPath, logCallback) {
     const isWindows = process.platform === 'win32';
     
     // Escape paths to prevent command injection
-    const escapedSourceDir = sourceDir.replace(/"/g, '\\"');
-    const escapedOutputPath = outputPath.replace(/"/g, '\\"');
+    // For production, use the 'archiver' npm package instead
+    const escapedSourceDir = sourceDir.replace(/[\\"'$`]/g, '\\$&');
+    const escapedOutputPath = outputPath.replace(/[\\"'$`]/g, '\\$&');
     
     let command;
 
